@@ -60,15 +60,15 @@ class Data():
         array = self.scl.fit_transform(array)
         return array
 
-    def split_input(self, data, look_back, jump=1):
+    def split_input(self, data, look_back, forward_days, jump=1):
         X = []
-        for i in range(0, len(data) - look_back + 1, jump):
+        for i in range(0, len(data) - look_back - forward_days +  1, jump):
             X.append(data[i:(i + look_back)])
         return X
 
-    def split_out(self, data, forward_days, jump=1):
+    def split_out(self, data, look_back, forward_days, jump=1):
         Y = []
-        for i in range(0, len(data) - forward_days + 1, jump):
+        for i in range(look_back, len(data) - forward_days + 1, jump):
             Y.append(data[i:(i+forward_days)])
         return Y
 
@@ -93,21 +93,22 @@ def lstm_main():
     array_train = array[:division]
 
     #划分测试集时间窗口
-    X_test = train_data.split_input(array_test, look_back, forward_days)
+    X_test = train_data.split_input(array_test, look_back, forward_days, forward_days)
     X_test = np.array(X_test)
     #y_test = np.array([list(a.ravel()) for a in y_test])
 
     #划分训练集时间窗口
-    X = train_data.split_input(array_train, look_back)
+    X = train_data.split_input(array_train, look_back, forward_days)
     X = np.array(X)
-    y = train_data.split_out(array_train, forward_days)
+    y = train_data.split_out(array_train, look_back, forward_days)
     y = np.array(y)
     y = np.array([list(a.ravel()) for a in y])
     model = lstm_model(scl)
     try:
-        model.load_lstm_model('saved_model/LSTM_cars_number_2_1.h5')
+        model.load_lstm_model('saved_model/LSTM_google_drive.h5')
     except Exception:
         model.train_model(X, y, look_back, forward_days)
+        model.save__model('saved_model/LSTM_google_drive.h5')
     # 对训练集进行预测
     predict = model.model_predict(X_test)
     predict = sum(predict.tolist(), [])
